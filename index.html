@@ -1,0 +1,142 @@
+<html>
+<head>
+  <style>
+    .word {
+      display: flex;
+      flex-direction: row;
+    }
+    .char {
+      width: 50px;
+      height: 50px;
+      font-size: 40px;
+      position: relative;
+    }
+    .con {
+      position: absolute;
+      color: red;
+    }
+    .col-left {
+      position: absolute;
+      left: 18px;
+      top: 3px;
+      color: blue;
+    }
+    .col-left:not(.col-bottom) + .under-con {
+      top: 24px;
+      left: 5px;
+    }
+    .col-bottom {
+      position: absolute;
+      top: 13px;
+      color: blue;
+    }
+    .col-left.col-bottom {
+      left: 4px;
+      top: 15px;
+    }
+    .under-con {
+      position: absolute;
+      top: 27px;
+      left: 1px;
+      color: orange;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <input id="input" type="text"></input>
+    <button id="button">변환</button>
+    <div id="result"></div>
+  </div>
+  <div class="word">
+    <div class="char">
+      <span class="con">ㅇ</span>
+      <span class="col-left">ㅏ</span>
+      <span class="under-con">ㄴ</span>
+    </div>
+    <div class="char">
+      <span class="con">ㅇ</span>
+      <span class="col-bottom">ㅜ</span>
+      <span class="under-con">ㄴ</span>
+    </div>
+    <div class="char">
+      <span class="con">ㅇ</span>
+      <span class="col-bottom col-left">ㅟ</span>
+      <span class="under-con">ㄴ</span>
+    </div>
+  </div>
+</body>
+</html>
+<script type="text/javascript">
+const kWordCodeFirst = "가".charCodeAt(0);
+const kWordCodeLast = "힣".charCodeAt(0);
+const kWordUnderConPack = ['ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function _krCutCon(kWord) {
+  return _krCut(kWord, function(charCode) {
+    var cutCode = 0x1100 + (((charCode - kWordCodeFirst) / 28) / 21);
+    // console.log(cutCode);
+    return "<span class='con'>" + String.fromCharCode(cutCode) + "</span>";
+  });
+}
+function _krCutCol(kWord) {
+  return _krCut(kWord, function(charCode) {
+      var charIndex = (((charCode - kWordCodeFirst) / 28) % 21);
+      var html = "<span class='";
+      if (charIndex < 8 || (charIndex > 8 && charIndex < 12) || (charIndex > 13 && charIndex < 17) || charIndex > 18) {
+        html += " col-left ";
+      }
+      if (7 < charIndex && charIndex < 20) {
+        html += " col-bottom ";
+      }
+      html += "'>" + String.fromCharCode(0x1161 + charIndex) + "</span>";
+      return html;
+  });
+}
+function _krCutUnderCon(kWord) {
+  return _krCut(kWord, function(charCode) {
+    var charCode = (charCode - kWordCodeFirst) % 28;
+    if (charCode == 0) {
+      return "";
+    } else {
+      return "<span class='under-con'>" + kWordUnderConPack[charCode - 1] + "</span>";
+    }
+
+  });
+}
+// callback은 charCode를 res합니다.
+// callback리턴값으로 구분
+function _krCut(kWord, callback) {
+  if (kWord.length == 1) {
+    var kWordCode = kWord.charCodeAt(0);
+    // console.log(kWord, kWordCode);
+    if (kWordCodeFirst <= kWordCode && kWordCode <= kWordCodeLast) {
+      return callback(kWordCode);
+    } else {
+      return "" // 한글이 아님!
+    }
+  } else {
+    return ""; // 한글자 이상임!
+  }
+}
+
+document.getElementById("button").onclick = function(){
+  var input = document.getElementById("input");
+  var result = document.getElementById("result");
+  var resultHTML = "<div class='word'>";
+
+  for (var kWord of input.value) {
+    var kWordCode = kWord.charCodeAt(0)
+    resultHTML += "<span class='char'>";
+    if (kWordCodeFirst <= kWordCode && kWordCode <= kWordCodeLast) {
+      resultHTML += _krCutCon(kWord);
+      resultHTML += _krCutCol(kWord);
+      resultHTML += _krCutUnderCon(kWord)
+    } else {
+      resultHTML += kWord;
+    }
+    resultHTML += "</span>";
+  }
+  resultHTML += "</div>";
+  result.innerHTML = resultHTML;
+};
+</script>
